@@ -3,7 +3,7 @@ name: Sign IPA
 on:
   workflow_dispatch:
     inputs:
-      ipa_url:
+      downloadUrl:
         description: HTTPS download URL for the input IPA
         type: string
         required: true
@@ -65,8 +65,8 @@ jobs:
         env:
           IPA_DOWNLOAD_TOKEN: ${{ steps.signer-token.outputs.token }}
         run: |
-          url=$(jq -er '.inputs.ipa_url | select(startswith("https://") and (test("[[:cntrl:]]") | not))' "$GITHUB_EVENT_PATH") || {
-            echo "::error::ipa_url must be an HTTPS URL"
+          url=$(jq -er '.inputs.downloadUrl | select(startswith("https://") and (test("[[:cntrl:]]") | not))' "$GITHUB_EVENT_PATH") || {
+            echo "::error::downloadUrl must be an HTTPS URL"
             exit 1
           }
           python3 ./signer/download.py -- "$url" "$RUNNER_TEMP/unsigned.ipa"
