@@ -7,6 +7,10 @@ on:
         description: HTTPS download URL for the input IPA
         type: string
         required: true
+      appKey:
+        description: Destination object key for the signed IPA
+        type: string
+        required: true
       cert_id:
         description: Certificate set ID in signstore-signer
         type: string
@@ -100,6 +104,12 @@ jobs:
           STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
           STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
         run: |
-          object_key="signed/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.ipa"
-          python3 ./signer/upload.py "$RUNNER_TEMP/signed.ipa" "$object_key"
-          printf "Signed IPA uploaded as \`%s\`.\n" "$object_key" >> "$GITHUB_STEP_SUMMARY"
+          if ! object_key=$(jq -er '
+            .inputs.appKey | strings
+            | select(test("[^[:space:]]") and (test("[[:cntrl:]]") | not) and (endswith("/") | not))
+          ' "$GITHUB_EVENT_PATH"); then
+            echo "::error::appKey must be a nonempty object key without control characters or a trailing slash"
+            exit 1
+          fi
+          python3 ./signer/upload.py -- "$RUNNER_TEMP/signed.ipa" "$object_key"
+          printf 'Signed IPA uploaded.\n' >> "$GITHUB_STEP_SUMMARY"
