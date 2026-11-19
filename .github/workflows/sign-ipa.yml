@@ -63,8 +63,13 @@ jobs:
 
       - name: Install signing dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends libarchive-tools libplist-utils libstdc++6 openssl zip
+          tools_dir="$RUNNER_TEMP/signing-tools"
+          mkdir -p "$tools_dir"
+          for package in signer/vendor/ubuntu-24.04-amd64/*.deb; do
+            dpkg-deb --extract "$package" "$tools_dir"
+          done
+          echo "$tools_dir/usr/bin" >> "$GITHUB_PATH"
+          echo "LD_LIBRARY_PATH=$tools_dir/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
       - name: Download IPA
         env:
