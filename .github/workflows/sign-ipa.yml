@@ -11,10 +11,9 @@ on:
         description: Destination object key for the signed IPA
         type: string
         required: true
-      cert_id:
+      certificateId:
         description: Certificate set ID in signstore-signer
         type: string
-        default: '1'
         required: true
       bundleId:
         description: Final bundle identifier
@@ -74,10 +73,10 @@ jobs:
 
       - name: Sign IPA
         env:
-          CERT_ID: ${{ inputs.cert_id }}
+          CERTIFICATE_ID: ${{ inputs.certificateId }}
         run: |
-          if [[ ! "$CERT_ID" =~ ^[0-9]+$ ]]; then
-            echo "::error::cert_id must be numeric"
+          if [[ ! "$CERTIFICATE_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::certificateId must be numeric"
             exit 1
           fi
           bundle_id=$(jq -r '.inputs.bundleId // empty' "$GITHUB_EVENT_PATH")
@@ -90,7 +89,7 @@ jobs:
             bundle_args+=("--bundle-display-name=$bundle_display_name")
           fi
           # The signing logs can identify the app and signing team.
-          if ! python3 ./signer/sign.py "$RUNNER_TEMP/unsigned.ipa" "signer/certificates/$CERT_ID" \
+          if ! python3 ./signer/sign.py "$RUNNER_TEMP/unsigned.ipa" "signer/certificates/$CERTIFICATE_ID" \
               "$RUNNER_TEMP/signed.ipa" "${bundle_args[@]}" > "$RUNNER_TEMP/signing.log" 2>&1; then
             echo "::error::IPA signing failed. Check the selected certificate and provisioning profiles."
             exit 1
