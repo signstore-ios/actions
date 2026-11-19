@@ -1,4 +1,5 @@
 name: Sign IPA
+run-name: "signedAppId=${{ inputs.signedAppId }}"
 
 on:
   workflow_dispatch:
@@ -9,6 +10,10 @@ on:
         required: true
       appKey:
         description: Destination object key for the signed IPA
+        type: string
+        required: true
+      signedAppId:
+        description: Identifier for the signed app
         type: string
         required: true
       certificateId:
