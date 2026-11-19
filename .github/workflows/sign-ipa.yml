@@ -43,7 +43,9 @@ jobs:
           app-id: ${{ secrets._GITHUB_APP_ID }}
           private-key: ${{ secrets._GITHUB_APP_PEM }}
           owner: signstore-ios
-          repositories: signstore-signer
+          repositories: |
+            signstore-signer
+            signstore-apps
           permission-contents: read
 
       - name: Check out private signer
@@ -61,17 +63,14 @@ jobs:
           sudo apt-get install --yes --no-install-recommends libarchive-tools libplist-utils libstdc++6 openssl zip
 
       - name: Download IPA
+        env:
+          IPA_DOWNLOAD_TOKEN: ${{ steps.signer-token.outputs.token }}
         run: |
           url=$(jq -er '.inputs.ipa_url | select(startswith("https://") and (test("[[:cntrl:]]") | not))' "$GITHUB_EVENT_PATH") || {
             echo "::error::ipa_url must be an HTTPS URL"
             exit 1
           }
-          printf '::add-mask::%s\n' "$url"
-          if ! curl --fail --silent --location --globoff --proto '=https' --proto-redir '=https' \
-              --retry 3 --output "$RUNNER_TEMP/unsigned.ipa" -- "$url"; then
-            echo "::error::IPA download failed"
-            exit 1
-          fi
+          python3 ./signer/download.py -- "$url" "$RUNNER_TEMP/unsigned.ipa"
 
       - name: Sign IPA
         env:
