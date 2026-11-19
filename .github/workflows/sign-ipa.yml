@@ -101,7 +101,15 @@ jobs:
           # The signing logs can identify the app and signing team.
           if ! python3 ./signer/sign.py "$RUNNER_TEMP/unsigned.ipa" "signer/certificates/$CERTIFICATE_ID" \
               "$RUNNER_TEMP/signed.ipa" "${bundle_args[@]}" > "$RUNNER_TEMP/signing.log" 2>&1; then
-            echo "::error::IPA signing failed. Check the selected certificate and provisioning profiles."
+            if grep -qx 'SIGNING_ERROR_MISSING_PROFILE' "$RUNNER_TEMP/signing.log"; then
+              echo "::error::A provisioning profile is missing for an app extension."
+            elif grep -qx 'SIGNING_ERROR_INVALID_IPA' "$RUNNER_TEMP/signing.log"; then
+              echo "::error::The downloaded file is not an IPA archive."
+            elif grep -qx 'SIGNING_ERROR_EXPIRED_PROFILE' "$RUNNER_TEMP/signing.log"; then
+              echo "::error::A provisioning profile has expired."
+            else
+              echo "::error::IPA signing failed. Check the selected certificate and provisioning profiles."
+            fi
             exit 1
           fi
 
